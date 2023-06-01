@@ -16,7 +16,7 @@ IMPORT:                                 'import';
 INCLUDE:                                'include';
 TESTS:                                  'MappingTests';
 EXTENDS:                                'extends';
-INCLUDETYPE:                        'include '[a-z]([a-z])*' ';
+INCLUDETYPE:                            'include '[a-z]([a-z])*' ';
 
 //--------------------------------------- TEST ------------------------------------------
 TEST_QUERY:                             'query';

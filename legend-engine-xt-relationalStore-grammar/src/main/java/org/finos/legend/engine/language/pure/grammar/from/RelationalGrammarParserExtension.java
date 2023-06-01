@@ -386,4 +386,23 @@ public class RelationalGrammarParserExtension implements IRelationalGrammarParse
             }
         }
     }
+
+    @Override
+    public List<Function<String, String>> getExtraIncludedStoreParsers()
+    {
+        return Lists.mutable.of(this::parseIncludedStore);
+    }
+
+    private String parseIncludedStore(String type)
+    {
+        if (type == null || type.equals("database"))
+        {
+            return "database";
+        }
+        else
+        {
+            return null;
+        }
+    }
+
 }

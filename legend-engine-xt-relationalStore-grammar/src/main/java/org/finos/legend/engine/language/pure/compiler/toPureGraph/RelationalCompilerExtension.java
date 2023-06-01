@@ -29,6 +29,7 @@ import org.eclipse.collections.api.map.MutableMap;
 import org.eclipse.collections.api.multimap.Multimap;
 import org.eclipse.collections.api.set.MutableSet;
 import org.eclipse.collections.api.tuple.Pair;
+import org.eclipse.collections.impl.factory.Iterables;
 import org.eclipse.collections.impl.list.mutable.FastList;
 import org.eclipse.collections.impl.tuple.Tuples;
 import org.eclipse.collections.impl.utility.ListIterate;
@@ -48,6 +49,7 @@ import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.mapping
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.mapping.aggregationAware.AggregateSetImplementationContainer;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.mapping.aggregationAware.AggregationAwareClassMapping;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.mapping.mappingTest.InputData;
+import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.store.IncludedStore;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.store.relational.connection.RelationalDatabaseConnection;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.store.relational.connection.authentication.AuthenticationStrategy;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.store.relational.connection.postprocessor.MapperPostProcessor;
@@ -87,6 +89,7 @@ import org.finos.legend.pure.runtime.java.compiled.generation.processors.support
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 
@@ -116,15 +119,15 @@ public class RelationalCompilerExtension implements IRelationalCompilerExtension
                 (Database srcDatabase, CompileContext context) ->
                 {
                     org.finos.legend.pure.m3.coreinstance.meta.relational.metamodel.Database database = HelperRelationalBuilder.getDatabase(context.pureModel.buildPackageString(srcDatabase._package, srcDatabase.name), srcDatabase.sourceInformation, context);
-                    if (!srcDatabase.includedStores.isEmpty())
-                    {
-                        database._includes(ListIterate.collect(srcDatabase.includedStores, include -> HelperRelationalBuilder.resolveDatabase(context.pureModel.addPrefixToTypeReference(include), srcDatabase.sourceInformation, context)));
-                    }
-                    database._schemas(ListIterate.collect(srcDatabase.schemas, _schema -> HelperRelationalBuilder.processDatabaseSchema(_schema, context, database)));
                 },
                 (Database srcDatabase, CompileContext context) ->
                 {
                     org.finos.legend.pure.m3.coreinstance.meta.relational.metamodel.Database database = HelperRelationalBuilder.getDatabase(context.pureModel.buildPackageString(srcDatabase._package, srcDatabase.name), srcDatabase.sourceInformation, context);
+                    if (!srcDatabase.includedStores.isEmpty())
+                    {
+                        database._includes(ListIterate.flatCollect(srcDatabase.includedStores, include -> context.pureModel.extensions.getExtraIncludedStoreHandlers(include).apply(include, context)));
+                    }
+                    database._schemas(ListIterate.collect(srcDatabase.schemas, _schema -> HelperRelationalBuilder.processDatabaseSchema(_schema, context, database)));
                     ListIterate.forEach(srcDatabase.schemas, _schema -> HelperRelationalBuilder.processDatabaseSchemaViewsFirstPass(_schema, context, database));
                 },
                 (Database srcDatabase, CompileContext context) ->
@@ -592,4 +595,11 @@ public class RelationalCompilerExtension implements IRelationalCompilerExtension
         return Collections.singletonList(RelationalValidator::validateRelationalMapping);
     }
 
+    @Override
+    public Map<String, Function2<IncludedStore, CompileContext, RichIterable<Store>>> getExtraIncludedStoreHandlers()
+    {
+        return org.eclipse.collections.impl.factory.Maps.mutable.of(
+                "database", (IncludedStore includedStore, CompileContext c) -> Iterables.iList(HelperRelationalBuilder.resolveDatabase(includedStore.name,includedStore.sourceInformation,c))
+        );
+    }
 }

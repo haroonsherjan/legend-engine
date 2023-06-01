@@ -160,7 +160,11 @@ public class DataSpaceGrammarComposerExtension implements PureGrammarComposerExt
         if (mappingInclude.getClass() == MappingIncludeDataSpace.class)
         {
             MappingIncludeDataSpace mappingIncludeDataSpace = (MappingIncludeDataSpace) mappingInclude;
-            return "include dataspace " + mappingIncludeDataSpace.includedDataSpace;
+            return "include dataspace " + mappingIncludeDataSpace.includedDataSpace
+                    + (mappingIncludeDataSpace.targetDatabasePath != null
+                    ? "[" + mappingIncludeDataSpace.sourceDatabasePath + " -> " + mappingIncludeDataSpace.targetDatabasePath + "]"
+                    : ""
+            );
         }
         return null;
     }

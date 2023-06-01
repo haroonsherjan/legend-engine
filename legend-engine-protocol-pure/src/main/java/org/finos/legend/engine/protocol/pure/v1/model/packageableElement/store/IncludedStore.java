@@ -14,12 +14,11 @@
 
 package org.finos.legend.engine.protocol.pure.v1.model.packageableElement.store;
 
-import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.PackageableElement;
+import org.finos.legend.engine.protocol.pure.v1.model.SourceInformation;
 
-import java.util.Collections;
-import java.util.List;
-
-public abstract class Store extends PackageableElement
+public class IncludedStore
 {
-    public List<IncludedStore> includedStores = Collections.emptyList();
+    public String type;
+    public String name;
+    public SourceInformation sourceInformation;
 }

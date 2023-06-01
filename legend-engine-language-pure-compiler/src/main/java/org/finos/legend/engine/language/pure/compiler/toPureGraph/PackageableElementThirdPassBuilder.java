@@ -19,6 +19,9 @@ import org.eclipse.collections.api.list.MutableList;
 import org.eclipse.collections.api.tuple.Pair;
 import org.eclipse.collections.impl.factory.Lists;
 import org.eclipse.collections.impl.utility.ListIterate;
+import org.finos.legend.engine.language.pure.compiler.toPureGraph.extension.CompilerExtensions;
+import org.finos.legend.engine.language.pure.compiler.toPureGraph.handlers.IncludedMappingHandler;
+import org.finos.legend.engine.protocol.pure.v1.model.context.EngineErrorType;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.PackageableElementVisitor;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.connection.PackageableConnection;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.data.DataElement;
@@ -31,10 +34,14 @@ import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.domain.
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.mapping.Mapping;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.runtime.PackageableRuntime;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.section.SectionIndex;
+import org.finos.legend.engine.shared.core.operational.errorManagement.EngineException;
 import org.finos.legend.pure.m3.coreinstance.meta.pure.mapping.EmbeddedSetImplementation;
 import org.finos.legend.pure.m3.coreinstance.meta.pure.mapping.SetImplementation;
 import org.finos.legend.pure.m3.coreinstance.meta.pure.metamodel.PackageableElement;
 import org.finos.legend.pure.m3.coreinstance.meta.pure.metamodel.valuespecification.ValueSpecification;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public class PackageableElementThirdPassBuilder implements PackageableElementVisitor<PackageableElement>
 {
@@ -113,12 +120,30 @@ public class PackageableElementThirdPassBuilder implements PackageableElementVis
     public PackageableElement visit(Mapping mapping)
     {
         final org.finos.legend.pure.m3.coreinstance.meta.pure.mapping.Mapping pureMapping = this.context.pureModel.getMapping(this.context.pureModel.buildPackageString(mapping._package, mapping.name), mapping.sourceInformation);
-        if (mapping.classMappings == null || !pureMapping._classMappings().isEmpty())
+        if (!mapping.includedMappings.isEmpty())
         {
-            return pureMapping;
+            CompilerExtensions extensions = context.pureModel.extensions;
+            RichIterable<org.finos.legend.pure.m3.coreinstance.meta.pure.mapping.MappingInclude> mappingIncludes =
+                    ListIterate.collect(mapping.includedMappings, i ->
+                    {
+                        IncludedMappingHandler handler = extensions.getExtraIncludedMappingHandlers(i.getClass().getName());
+                        return handler.processMappingInclude(i, this.context, pureMapping,
+                                handler.resolveMapping(i, this.context));
+                    });
+            pureMapping._includesAddAll(mappingIncludes);
+            // validate no duplicated included mappings
+            Set<String> uniqueMappingIncludes = new HashSet<>();
+            mappingIncludes.forEach(includedMapping ->
+            {
+                String mappingName = IncludedMappingHandler.parseIncludedMappingNameRecursively(includedMapping);
+                if (!uniqueMappingIncludes.add(mappingName))
+                {
+                    throw new EngineException("Duplicated mapping include '" + mappingName +
+                            "' in " + "mapping " +
+                            "'" + this.context.pureModel.buildPackageString(mapping._package, mapping.name) + "'", mapping.sourceInformation, EngineErrorType.COMPILATION);
+                }
+            });
         }
-        RichIterable<Pair<SetImplementation, RichIterable<EmbeddedSetImplementation>>> setImplementations = ListIterate.collect(mapping.classMappings, cm -> cm.accept(new ClassMappingFirstPassBuilder(this.context, pureMapping)));
-        pureMapping._classMappingsAddAll(setImplementations.flatCollect(p -> Lists.mutable.with(p.getOne()).withAll(p.getTwo())));
         return pureMapping;
     }
 

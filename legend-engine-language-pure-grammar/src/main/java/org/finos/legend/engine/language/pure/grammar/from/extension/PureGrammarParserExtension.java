@@ -14,11 +14,17 @@
 
 package org.finos.legend.engine.language.pure.grammar.from.extension;
 
+import org.eclipse.collections.impl.utility.ListIterate;
 import org.finos.legend.engine.language.pure.grammar.from.extension.data.EmbeddedDataParser;
 import org.finos.legend.engine.language.pure.grammar.from.extension.test.assertion.TestAssertionParser;
 import org.finos.legend.engine.language.pure.grammar.from.mapping.MappingIncludeParser;
+import org.finos.legend.engine.protocol.pure.v1.model.context.EngineErrorType;
+import org.finos.legend.engine.shared.core.operational.errorManagement.EngineException;
 
 import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Function;
 
 public interface PureGrammarParserExtension
 {
@@ -58,6 +64,28 @@ public interface PureGrammarParserExtension
     }
 
     default Iterable<? extends MappingIncludeParser> getExtraMappingIncludeParsers()
+    {
+        return Collections.emptyList();
+    }
+
+    static String parseIncludedStoreType(String type, List<Function<String, String>> processors)
+    {
+        List<String> results = ListIterate.collect(processors, func -> func.apply(type)).select(Objects::nonNull);
+        if (results.isEmpty())
+        {
+            throw new EngineException("Unsupported included store type: " + type, EngineErrorType.PARSER);
+        }
+        else if (results.size() > 1)
+        {
+            throw new EngineException("Too many parsers for provided type: " + type, EngineErrorType.PARSER);
+        }
+        else
+        {
+            return results.get(0);
+        }
+    }
+
+    default List<Function<String, String>> getExtraIncludedStoreParsers()
     {
         return Collections.emptyList();
     }

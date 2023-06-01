@@ -230,7 +230,7 @@ public class RelationalGrammarComposerExtension implements IRelationalGrammarCom
         boolean nonEmpty = false;
         if (!database.includedStores.isEmpty())
         {
-            builder.append(LazyIterate.collect(database.includedStores, include -> getTabString(1) + "include " + PureGrammarComposerUtility.convertPath(include)).makeString("\n"));
+            builder.append(LazyIterate.collect(database.includedStores, include -> getTabString(1) + "include " + include.type + " " + PureGrammarComposerUtility.convertPath(include.name)).makeString("\n"));
             builder.append("\n");
             nonEmpty = true;
         }

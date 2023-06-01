@@ -198,33 +198,9 @@ public class PackageableElementSecondPassBuilder implements PackageableElementVi
     {
         final org.finos.legend.pure.m3.coreinstance.meta.pure.mapping.Mapping pureMapping = this.context.pureModel.getMapping(this.context.pureModel.buildPackageString(mapping._package, mapping.name), mapping.sourceInformation);
         RichIterable<org.finos.legend.pure.m3.coreinstance.meta.pure.mapping.EnumerationMapping<Object>> enumerationMappings = ListIterate.collect(mapping.enumerationMappings, em -> HelperMappingBuilder.processEnumMapping(em, pureMapping, this.context));
-        if (enumerationMappings.isEmpty() && mapping.includedMappings.isEmpty())
+        if (enumerationMappings.isEmpty())
         {
             return pureMapping;
-        }
-        if (!mapping.includedMappings.isEmpty())
-        {
-            CompilerExtensions extensions = context.pureModel.extensions;
-            RichIterable<org.finos.legend.pure.m3.coreinstance.meta.pure.mapping.MappingInclude> mappingIncludes =
-                    ListIterate.collect(mapping.includedMappings, i ->
-                    {
-                        IncludedMappingHandler handler = extensions.getExtraIncludedMappingHandlers(i.getClass().getName());
-                        return handler.processMappingInclude(i, this.context, pureMapping,
-                                handler.resolveMapping(i, this.context));
-                    });
-            pureMapping._includesAddAll(mappingIncludes);
-            // validate no duplicated included mappings
-            Set<String> uniqueMappingIncludes = new HashSet<>();
-            mappingIncludes.forEach(includedMapping ->
-            {
-                String mappingName = IncludedMappingHandler.parseIncludedMappingNameRecursively(includedMapping);
-                if (!uniqueMappingIncludes.add(mappingName))
-                {
-                    throw new EngineException("Duplicated mapping include '" + mappingName +
-                            "' in " + "mapping " +
-                            "'" + this.context.pureModel.buildPackageString(mapping._package, mapping.name) + "'", mapping.sourceInformation, EngineErrorType.COMPILATION);
-                }
-            });
         }
         pureMapping._enumerationMappings(enumerationMappings);
         return pureMapping;

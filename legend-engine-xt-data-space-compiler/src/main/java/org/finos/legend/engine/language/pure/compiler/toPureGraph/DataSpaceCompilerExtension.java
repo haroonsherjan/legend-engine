@@ -14,6 +14,8 @@
 
 package org.finos.legend.engine.language.pure.compiler.toPureGraph;
 
+import org.eclipse.collections.api.RichIterable;
+import org.eclipse.collections.api.block.function.Function2;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.factory.Maps;
 import org.eclipse.collections.api.factory.Sets;
@@ -25,14 +27,18 @@ import org.finos.legend.engine.language.pure.compiler.toPureGraph.extension.Comp
 import org.finos.legend.engine.language.pure.compiler.toPureGraph.extension.Processor;
 import org.finos.legend.engine.language.pure.compiler.toPureGraph.handlers.IncludedMappingHandler;
 import org.finos.legend.engine.protocol.pure.v1.model.context.EngineErrorType;
+import org.finos.legend.engine.protocol.pure.v1.model.context.PackageableElementPointer;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.dataSpace.*;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.diagram.Diagram;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.runtime.PackageableRuntime;
+import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.store.IncludedStore;
 import org.finos.legend.engine.shared.core.operational.Assert;
 import org.finos.legend.engine.shared.core.operational.errorManagement.EngineException;
 import org.finos.legend.pure.generated.*;
 import org.finos.legend.pure.m3.coreinstance.meta.pure.mapping.Mapping;
 import org.finos.legend.pure.m3.coreinstance.meta.pure.metamodel.PackageableElement;
+import org.finos.legend.pure.m3.coreinstance.meta.pure.store.Store;
+import org.finos.legend.pure.m3.coreinstance.meta.relational.metamodel.Database;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -59,31 +65,6 @@ public class DataSpaceCompilerExtension implements CompilerExtension
                 {
                     Root_meta_pure_metamodel_dataSpace_DataSpace metamodel = new Root_meta_pure_metamodel_dataSpace_DataSpace_Impl(dataSpace.name, null, context.pureModel.getClass("meta::pure::metamodel::dataSpace::DataSpace"))._name(dataSpace.name);
                     dataSpacesIndex.put(context.pureModel.buildPackageString(dataSpace._package, dataSpace.name), metamodel);
-                    metamodel._stereotypes(ListIterate.collect(dataSpace.stereotypes, s -> context.resolveStereotype(s.profile, s.value, s.profileSourceInformation, s.sourceInformation)));
-                    metamodel._taggedValues(ListIterate.collect(dataSpace.taggedValues, t -> new Root_meta_pure_metamodel_extension_TaggedValue_Impl("", null, context.pureModel.getClass("meta::pure::metamodel::extension::TaggedValue"))._tag(context.resolveTag(t.tag.profile, t.tag.value, t.tag.profileSourceInformation, t.tag.sourceInformation))._value(t.value)));
-
-                    // execution context
-                    if (dataSpace.executionContexts.isEmpty())
-                    {
-                        throw new EngineException("Data space must have at least one execution context", dataSpace.sourceInformation, EngineErrorType.COMPILATION);
-                    }
-                    metamodel._executionContexts(ListIterate.collect(dataSpace.executionContexts, executionContext ->
-                    {
-                        Mapping mapping = context.resolveMapping(executionContext.mapping.path, executionContext.mapping.sourceInformation);
-                        return new Root_meta_pure_metamodel_dataSpace_DataSpaceExecutionContext_Impl("", null, context.pureModel.getClass("meta::pure::metamodel::dataSpace::DataSpaceExecutionContext"))
-                                ._name(executionContext.name)
-                                ._title(executionContext.title)
-                                ._description(executionContext.description)
-                                ._mapping(mapping);
-                    }));
-                    Assert.assertTrue(dataSpace.defaultExecutionContext != null, () -> "Default execution context is missing", dataSpace.sourceInformation, EngineErrorType.COMPILATION);
-                    Root_meta_pure_metamodel_dataSpace_DataSpaceExecutionContext defaultExecutionContext = metamodel._executionContexts().toList().select(c -> dataSpace.defaultExecutionContext.equals(c._name())).getFirst();
-                    if (defaultExecutionContext == null)
-                    {
-                        throw new EngineException("Default execution context '" + dataSpace.defaultExecutionContext + "' does not match any existing execution contexts", dataSpace.sourceInformation, EngineErrorType.COMPILATION);
-                    }
-                    metamodel._defaultExecutionContext(defaultExecutionContext);
-
                     return metamodel;
                 },
                 (dataSpace, context) ->
@@ -199,4 +180,30 @@ public class DataSpaceCompilerExtension implements CompilerExtension
                 MappingIncludeDataSpace.class.getName(), new DataSpaceIncludedMappingHandler()
         );
     }
+
+    @Override
+    public Map<String, Function2<IncludedStore, CompileContext, RichIterable<Store>>> getExtraIncludedStoreHandlers()
+    {
+        return org.eclipse.collections.impl.factory.Maps.mutable.of(
+                "dataspace", (IncludedStore includedStore, CompileContext context) ->
+                {
+                    Root_meta_pure_metamodel_dataSpace_DataSpace dataspace =
+                            DataSpaceCompilerExtension.dataSpacesIndex.get(includedStore.name);
+                    return getDatabasesUnderDataSpace(dataspace, context);
+                }
+        );
+    }
+
+    public static RichIterable<Store> getDatabasesUnderDataSpace(Root_meta_pure_metamodel_dataSpace_DataSpace dataspace, CompileContext context)
+    {
+        return dataspace._defaultExecutionContext()._defaultRuntime()._runtimeValue()._connections()
+                .collect(Root_meta_pure_runtime_Connection::_element)
+                .select(element -> element instanceof PackageableElementPointer)
+                .collect(element -> (PackageableElementPointer) element)
+                .select(element -> !element.path.equals("ModelStore"))
+                .collect(element -> context.resolveStore(element.path, element.sourceInformation))
+                // Currently only supports relational databases
+                .select(store -> store instanceof Database);
+    }
+
 }

@@ -18,6 +18,7 @@ import io.opentracing.Scope;
 import io.opentracing.util.GlobalTracer;
 import org.eclipse.collections.api.RichIterable;
 import org.eclipse.collections.api.block.predicate.Predicate;
+import org.eclipse.collections.api.block.procedure.Procedure;
 import org.eclipse.collections.api.block.procedure.Procedure2;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.factory.Maps;
@@ -259,25 +260,11 @@ public class PureModel implements IPureModel
             LOGGER.info(new LogInfo(pm, LoggingEventType.GRAPH_OTHER_ELEMENTS_BUILT_PRE_STORES, (double) loadOtherElementsPreStores - loadTypesFinished).toString());
             scope.span().log(LoggingEventType.GRAPH_OTHER_ELEMENTS_BUILT_PRE_STORES.toString());
 
-            this.loadStores(pureModelContextDataIndex);
-            long loadStoresFinished = System.currentTimeMillis();
-            LOGGER.info(new LogInfo(pm, LoggingEventType.GRAPH_STORES_BUILT, this.buildStoreStats(pureModelContextData, this), (double) loadOtherElementsPreStores - loadTypesFinished).toString());
-            scope.span().log(LoggingEventType.GRAPH_STORES_BUILT.toString());
-
-            this.loadMappings(pureModelContextDataIndex);
-            long loadMappingsFinished = System.currentTimeMillis();
-            LOGGER.info(new LogInfo(pm, LoggingEventType.GRAPH_MAPPINGS_BUILT, (double) loadMappingsFinished - loadStoresFinished).toString());
-            scope.span().log(LoggingEventType.GRAPH_MAPPINGS_BUILT.toString());
-
-            this.loadConnectionsAndRuntimes(pureModelContextDataIndex);
-            long loadConnectionsAndRuntimesFinished = System.currentTimeMillis();
-            LOGGER.info(new LogInfo(pm, LoggingEventType.GRAPH_CONNECTIONS_AND_RUNTIMES_BUILT, (double) loadConnectionsAndRuntimesFinished - loadMappingsFinished).toString());
-            scope.span().log(LoggingEventType.GRAPH_CONNECTIONS_AND_RUNTIMES_BUILT.toString());
-
-            this.loadOtherElementsPostConnectionsAndRuntimes(pureModelContextDataIndex);
-            long loadOtherElementsPostConnectionsAndRuntimesFinished = System.currentTimeMillis();
-            LOGGER.info(new LogInfo(pm, LoggingEventType.GRAPH_OTHER_ELEMENTS_BUILT_POST_CONNECTIONS_AND_RUNTIMES, (double) loadOtherElementsPostConnectionsAndRuntimesFinished - loadConnectionsAndRuntimesFinished).toString());
-            scope.span().log(LoggingEventType.GRAPH_OTHER_ELEMENTS_BUILT_POST_CONNECTIONS_AND_RUNTIMES.toString());
+            // TODO: Refactor the remainder of packageable elements into these passes
+            loadGivenPass(pureModelContextDataIndex, this::processSecondPass);
+            loadGivenPass(pureModelContextDataIndex, this::processThirdPass);
+            loadGivenPass(pureModelContextDataIndex, this::processFourthPass);
+            loadGivenPass(pureModelContextDataIndex, this::processFifthPass);
 
             long processingFinished = System.currentTimeMillis();
 
@@ -469,42 +456,9 @@ public class PureModel implements IPureModel
         pure.dataElements.forEach(this::processSecondPass);
     }
 
-    private void loadStores(PureModelContextDataIndex pure)
-    {
-        this.extensions.sortExtraProcessors(pure.stores.keysView()).forEach(p ->
-        {
-            MutableList<org.finos.legend.engine.protocol.pure.v1.model.packageableElement.store.Store> stores = pure.stores.get(p);
-            stores.forEach(this::processSecondPass);
-            stores.forEach(this::processThirdPass);
-            stores.forEach(this::processFourthPass);
-            stores.forEach(this::processFifthPass);
-        });
-    }
-
-    public void loadMappings(PureModelContextDataIndex pure)
-    {
-        pure.mappings.forEach(this::processSecondPass);
-        pure.mappings.forEach(this::processThirdPass);
-        pure.mappings.forEach(this::processFourthPass);
-        pure.mappings.forEach(this::processFifthPass);
-
-    }
-
-    public void loadConnectionsAndRuntimes(PureModelContextDataIndex pure)
-    {
-        // Connections must be loaded before runtimes
-        pure.connections.forEach(this::processSecondPass);
-        pure.runtimes.forEach(this::processSecondPass);
-    }
-
     private void loadOtherElementsPreStores(PureModelContextDataIndex pure)
     {
         loadOtherElements(pure, p -> !p.getPrerequisiteClasses().contains(PackageableConnection.class) && !p.getPrerequisiteClasses().contains(PackageableRuntime.class));
-    }
-
-    private void loadOtherElementsPostConnectionsAndRuntimes(PureModelContextDataIndex pure)
-    {
-        loadOtherElements(pure, p -> p.getPrerequisiteClasses().contains(PackageableConnection.class) || p.getPrerequisiteClasses().contains(PackageableRuntime.class));
     }
 
     private void loadOtherElements(PureModelContextDataIndex pure, Predicate<? super Processor<?>> filter)
@@ -516,6 +470,28 @@ public class PureModel implements IPureModel
             elements.forEach(this::processThirdPass);
             elements.forEach(this::processFourthPass);
             elements.forEach(this::processFifthPass);
+        });
+    }
+
+    private void loadGivenPass(PureModelContextDataIndex pure, Procedure<? super org.finos.legend.engine.protocol.pure.v1.model.packageableElement.PackageableElement> pass)
+    {
+        this.extensions.sortExtraProcessors(pure.stores.keysView()).forEach(p ->
+        {
+            MutableList<org.finos.legend.engine.protocol.pure.v1.model.packageableElement.store.Store> stores = pure.stores.get(p);
+            stores.forEach(pass);
+        });
+        pure.mappings.forEach(pass);
+        pure.connections.forEach(pass);
+        pure.runtimes.forEach(pass);
+        loadOtherElementsGivenPass(pure, pass, p -> p.getPrerequisiteClasses().contains(PackageableConnection.class) || p.getPrerequisiteClasses().contains(PackageableRuntime.class));
+    }
+
+    private void loadOtherElementsGivenPass(PureModelContextDataIndex pure, Procedure<? super org.finos.legend.engine.protocol.pure.v1.model.packageableElement.PackageableElement> pass, Predicate<? super Processor<?>> filter)
+    {
+        this.extensions.sortExtraProcessors(pure.otherElementsByProcessor.keysView().select(filter)).forEach(p ->
+        {
+            MutableList<org.finos.legend.engine.protocol.pure.v1.model.packageableElement.PackageableElement> elements = pure.otherElementsByProcessor.get(p);
+            elements.forEach(this::processSecondPass);
         });
     }
 
