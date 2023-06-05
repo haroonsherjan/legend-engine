@@ -14,12 +14,12 @@
 
 package org.finos.legend.engine.protocol.pure.v1.model.packageableElement.store;
 
-import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.PackageableElement;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import org.finos.legend.engine.protocol.pure.v1.model.SourceInformation;
 
-import java.util.Collections;
-import java.util.List;
-
-public abstract class Store extends PackageableElement
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "_type")
+public abstract class IncludedStore
 {
-    public List<IncludedStore> includedStores = Collections.emptyList();
+    public String name;
+    public SourceInformation sourceInformation;
 }

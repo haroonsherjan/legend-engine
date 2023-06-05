@@ -20,6 +20,8 @@ import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.mapping
 public class MappingIncludeDataSpace extends MappingInclude
 {
     public String includedDataSpace;
+    public String sourceDatabasePath;
+    public String targetDatabasePath;
 
     @JsonIgnore
     public String getFullName()

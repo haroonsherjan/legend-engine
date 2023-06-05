@@ -14,6 +14,7 @@
 
 package org.finos.legend.engine.language.pure.grammar.to;
 
+import org.eclipse.collections.api.block.function.Function;
 import org.eclipse.collections.api.block.function.Function2;
 import org.eclipse.collections.api.block.function.Function3;
 import org.eclipse.collections.api.list.MutableList;
@@ -23,7 +24,9 @@ import org.eclipse.collections.impl.list.mutable.FastList;
 import org.eclipse.collections.impl.tuple.Tuples;
 import org.eclipse.collections.impl.utility.LazyIterate;
 import org.eclipse.collections.impl.utility.ListIterate;
+import org.finos.legend.engine.language.pure.grammar.from.IRelationalGrammarParserExtension;
 import org.finos.legend.engine.language.pure.grammar.from.RelationalGrammarParserExtension;
+import org.finos.legend.engine.language.pure.grammar.from.extension.PureGrammarParserExtension;
 import org.finos.legend.engine.language.pure.grammar.to.data.RelationalEmbeddedDataComposer;
 import org.finos.legend.engine.language.pure.grammar.to.extension.ContentWithType;
 import org.finos.legend.engine.language.pure.grammar.to.extension.PureGrammarComposerExtension;
@@ -33,6 +36,7 @@ import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.connect
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.mapping.AssociationMapping;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.mapping.ClassMapping;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.mapping.mappingTest.InputData;
+import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.store.IncludedStore;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.store.relational.connection.RelationalDatabaseConnection;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.store.relational.connection.authentication.AuthenticationStrategy;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.store.relational.connection.postprocessor.MapperPostProcessor;
@@ -230,7 +234,17 @@ public class RelationalGrammarComposerExtension implements IRelationalGrammarCom
         boolean nonEmpty = false;
         if (!database.includedStores.isEmpty())
         {
-            builder.append(LazyIterate.collect(database.includedStores, include -> getTabString(1) + "include " + PureGrammarComposerUtility.convertPath(include)).makeString("\n"));
+            builder.append(
+                    LazyIterate.collect(
+                            database.includedStores, include ->
+                                    getTabString(1) + "include " +
+                                PureGrammarComposerExtension.composeIncludedStore(
+                                        include,
+                                        ListIterate.collect(IRelationalGrammarComposerExtension.getExtensions(context.toPureGrammarComposerContext()), PureGrammarComposerExtension::getExtraIncludedStoreComposers)
+                                )
+                                + " " + PureGrammarComposerUtility.convertPath(include.name)
+                    ).makeString("\n")
+            );
             builder.append("\n");
             nonEmpty = true;
         }

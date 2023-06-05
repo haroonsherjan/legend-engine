@@ -12,14 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.finos.legend.engine.protocol.pure.v1.model.packageableElement.store;
+package org.finos.legend.engine.protocol.pure.v1.model.packageableElement.dataSpace;
 
-import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.PackageableElement;
+import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.store.IncludedStore;
 
-import java.util.Collections;
-import java.util.List;
-
-public abstract class Store extends PackageableElement
+public class IncludeStoreDataSpace extends IncludedStore
 {
-    public List<IncludedStore> includedStores = Collections.emptyList();
+
 }
