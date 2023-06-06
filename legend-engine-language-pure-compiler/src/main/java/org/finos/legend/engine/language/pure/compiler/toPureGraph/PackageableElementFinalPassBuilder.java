@@ -24,13 +24,10 @@ import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.data.Da
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.domain.Class;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.domain.*;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.mapping.Mapping;
-import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.mapping.MappingIncludeMapping;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.runtime.PackageableRuntime;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.section.SectionIndex;
 import org.finos.legend.pure.m3.coreinstance.meta.pure.mapping.MappingInclude;
 import org.finos.legend.pure.m3.coreinstance.meta.pure.metamodel.PackageableElement;
-
-import java.util.List;
 
 public class PackageableElementFinalPassBuilder implements PackageableElementVisitor<PackageableElement>
 {
@@ -88,13 +85,8 @@ public class PackageableElementFinalPassBuilder implements PackageableElementVis
     public PackageableElement visit(Mapping mapping)
     {
         final org.finos.legend.pure.m3.coreinstance.meta.pure.mapping.Mapping pureMapping = this.context.pureModel.getMapping(this.context.pureModel.buildPackageString(mapping._package, mapping.name), mapping.sourceInformation);
-        if (mapping.includedMappings != null)
+        if (mapping.includedMappings != null && !mapping.includedMappings.isEmpty())
         {
-            List<org.finos.legend.engine.protocol.pure.v1.model.packageableElement.mapping.MappingInclude> nonStandardIncludeList = ListIterate.select(mapping.includedMappings, include -> include.getClass() != MappingIncludeMapping.class);
-            if (nonStandardIncludeList.isEmpty())
-            {
-                return pureMapping;
-            }
             CompilerExtensions extensions = context.pureModel.extensions;
             RichIterable<MappingInclude> mappingIncludes =
                     ListIterate.collect(mapping.includedMappings, i ->

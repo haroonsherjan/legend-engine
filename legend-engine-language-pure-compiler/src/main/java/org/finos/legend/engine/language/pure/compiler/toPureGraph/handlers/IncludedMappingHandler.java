@@ -41,6 +41,6 @@ public interface IncludedMappingHandler
 
     default org.finos.legend.pure.m3.coreinstance.meta.pure.mapping.MappingInclude processMappingIncludeFinalPass(MappingInclude mappingInclude, CompileContext context, org.finos.legend.pure.m3.coreinstance.meta.pure.mapping.Mapping parentMapping, org.finos.legend.pure.m3.coreinstance.meta.pure.mapping.Mapping includedMapping)
     {
-        return processMappingInclude(mappingInclude, context, parentMapping, includedMapping);
+        return parentMapping._includes().select(i -> i._included().equals(includedMapping)).getOnly();
     }
 }

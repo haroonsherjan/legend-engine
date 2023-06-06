@@ -52,9 +52,7 @@ public class DataSpaceIncludedMappingHandler implements IncludedMappingHandler
     @Override
     public org.finos.legend.pure.m3.coreinstance.meta.pure.mapping.MappingInclude processMappingIncludeFinalPass(MappingInclude mappingInclude, CompileContext context, org.finos.legend.pure.m3.coreinstance.meta.pure.mapping.Mapping parentMapping, org.finos.legend.pure.m3.coreinstance.meta.pure.mapping.Mapping includedMapping)
     {
-        org.finos.legend.pure.m3.coreinstance.meta.pure.mapping.MappingInclude include = new Root_meta_pure_mapping_MappingInclude_Impl("", null, context.pureModel.getClass("meta::pure::mapping::MappingInclude"));
-        include._owner(parentMapping);
-        include._included(includedMapping);
+        org.finos.legend.pure.m3.coreinstance.meta.pure.mapping.MappingInclude include = parentMapping._includes().select(i -> i._included().equals(includedMapping)).getOnly();
         MappingIncludeDataSpace mappingIncludeDataSpace = (MappingIncludeDataSpace) mappingInclude;
         if (mappingIncludeDataSpace.sourceDatabasePath != null && mappingIncludeDataSpace.targetDatabasePath != null)
         {
