@@ -123,9 +123,9 @@ public class RelationalCompilerExtension implements IRelationalCompilerExtension
                     if (!srcDatabase.includedStores.isEmpty())
                     {
                         List<IncludedStore> includes = ListIterate.select(srcDatabase.includedStores, includedStore -> includedStore instanceof IncludedStoreDatabase);
-                        RichIterable<Store> stores = ListIterate.collect(includes, includedStore -> HelperRelationalBuilder.resolveDatabase(includedStore.name,includedStore.sourceInformation,context));
-                        if (!stores.isEmpty())
+                        if (!includes.isEmpty())
                         {
+                            RichIterable<Store> stores = ListIterate.collect(includes, includedStore -> HelperRelationalBuilder.resolveDatabase(includedStore.name,includedStore.sourceInformation,context));
                             database._includes(stores);
                         }
                     }
@@ -151,12 +151,12 @@ public class RelationalCompilerExtension implements IRelationalCompilerExtension
                 (Database srcDatabase, CompileContext context) ->
                 {
                     org.finos.legend.pure.m3.coreinstance.meta.relational.metamodel.Database database = HelperRelationalBuilder.getDatabase(context.pureModel.buildPackageString(srcDatabase._package, srcDatabase.name), srcDatabase.sourceInformation, context);
-                    if (!srcDatabase.includedStores.isEmpty())
+                    List<IncludedStore> includes = ListIterate.select(srcDatabase.includedStores, includedStore -> !(includedStore instanceof IncludedStoreDatabase));
+                    if (!includes.isEmpty())
                     {
-                        RichIterable<? extends Store> includes = ListIterate.flatCollect(srcDatabase.includedStores, include -> IRelationalCompilerExtension.getIncludedStoresFromExtraProcessors(context, include));
-                        database._includes(includes);
+                        RichIterable<? extends Store> stores = ListIterate.flatCollect(includes, include -> IRelationalCompilerExtension.getIncludedStoresFromExtraProcessors(context, include));
+                        database._includesAddAll(stores);
                     }
-                    database._schemas(ListIterate.collect(srcDatabase.schemas, _schema -> HelperRelationalBuilder.processDatabaseSchema(_schema, context, database)));
                 }
         ));
     }
