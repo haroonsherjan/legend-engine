@@ -130,6 +130,6 @@ function meta::pure::executionPlan::toString::connectionToString(connEl:meta::pu
                $extensions.executionPlanExtensions().printConnectionToString->map(x|$x->eval($extensions))->concatenate(
                [connection:Connection[1] | '']
                )->toOneMany()
-            ) + ', '
+            )
    + ')'
 }
