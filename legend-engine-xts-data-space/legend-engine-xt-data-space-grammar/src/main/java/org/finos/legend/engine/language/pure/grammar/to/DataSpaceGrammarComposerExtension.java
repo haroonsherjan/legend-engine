@@ -20,7 +20,9 @@ import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.impl.utility.LazyIterate;
 import org.eclipse.collections.impl.utility.ListIterate;
 import org.finos.legend.engine.language.pure.grammar.from.DataSpaceParserExtension;
+import org.finos.legend.engine.language.pure.grammar.to.data.HelperEmbeddedDataGrammarComposer;
 import org.finos.legend.engine.language.pure.grammar.to.extension.PureGrammarComposerExtension;
+import org.finos.legend.engine.protocol.pure.v1.model.data.EmbeddedData;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.PackageableElement;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.dataSpace.*;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.mapping.MappingInclude;
@@ -88,7 +90,7 @@ public class DataSpaceGrammarComposerExtension implements PureGrammarComposerExt
         return getTabString() + "/* Unsupported data space support info type */";
     }
 
-    private static String renderDataSpaceExecutionContext(DataSpaceExecutionContext executionContext)
+    private static String renderDataSpaceExecutionContext(DataSpaceExecutionContext executionContext, PureGrammarComposerContext context)
     {
         return getTabString(2) + "{\n" +
                 (getTabString(3) + "name: " + convertString(executionContext.name, true) + ";\n") +
@@ -97,7 +99,19 @@ public class DataSpaceGrammarComposerExtension implements PureGrammarComposerExt
                 getTabString(3) + "mapping: " + PureGrammarComposerUtility.convertPath(executionContext.mapping.path) + ";\n" +
                 getTabString(3) + "defaultRuntime: " + PureGrammarComposerUtility.convertPath(executionContext.defaultRuntime.path) + ";\n" +
                 (executionContext.stores == null ? "" : (getTabString(3) + "stores:" + (executionContext.stores.isEmpty() ? " []" : ("\n" + getTabString(3) + "[\n" + ListIterate.collect(executionContext.stores, store -> getTabString(4) + store.path).makeString(",\n") + "\n" + getTabString(3) + "]") + ";\n"))) +
+                (executionContext.testData == null ? "" : (renderTestData(executionContext.testData, 3, context) + "\n")) +
                 getTabString(2) + "}";
+    }
+
+    private static String renderTestData(EmbeddedData embeddedData, int baseIndentation, PureGrammarComposerContext context)
+    {
+        StringBuilder str = new StringBuilder();
+
+        str.append(getTabString(baseIndentation)).append("testData").append(":\n");
+        str.append(HelperEmbeddedDataGrammarComposer.composeEmbeddedData(embeddedData, PureGrammarComposerContext.Builder.newInstance(context).withIndentationString(getTabString(baseIndentation + 1)).build()));
+        str.append(";");
+
+        return str.toString();
     }
 
     private static String renderDataSpaceDiagram(DataSpaceDiagram diagram)
@@ -140,7 +154,7 @@ public class DataSpaceGrammarComposerExtension implements PureGrammarComposerExt
         }
         return "DataSpace " + HelperDomainGrammarComposer.renderAnnotations(dataSpace.stereotypes, dataSpace.taggedValues) + PureGrammarComposerUtility.convertPath(dataSpace.getPath()) + "\n" +
                 "{\n" +
-                getTabString() + "executionContexts:" + (dataSpace.executionContexts.isEmpty() ? " []" : "\n" + getTabString() + "[\n" + ListIterate.collect(dataSpace.executionContexts, DataSpaceGrammarComposerExtension::renderDataSpaceExecutionContext).makeString(",\n") + "\n" + getTabString() + "]") + ";\n" +
+                getTabString() + "executionContexts:" + (dataSpace.executionContexts.isEmpty() ? " []" : "\n" + getTabString() + "[\n" + ListIterate.collect(dataSpace.executionContexts, executionContext -> DataSpaceGrammarComposerExtension.renderDataSpaceExecutionContext(executionContext, context)).makeString(",\n") + "\n" + getTabString() + "]") + ";\n" +
                 getTabString() + "defaultExecutionContext: " + convertString(dataSpace.defaultExecutionContext, true) + ";\n" +
                 (dataSpace.title != null ? (getTabString() + "title: " + convertString(dataSpace.title, true) + ";\n") : "") +
                 (dataSpace.description != null ? (getTabString() + "description: " + convertString(dataSpace.description, true) + ";\n") : "") +

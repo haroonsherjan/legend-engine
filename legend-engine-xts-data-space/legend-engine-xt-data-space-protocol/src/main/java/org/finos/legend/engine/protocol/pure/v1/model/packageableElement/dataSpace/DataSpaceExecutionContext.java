@@ -16,6 +16,7 @@ package org.finos.legend.engine.protocol.pure.v1.model.packageableElement.dataSp
 
 import org.finos.legend.engine.protocol.pure.v1.model.SourceInformation;
 import org.finos.legend.engine.protocol.pure.v1.model.context.PackageableElementPointer;
+import org.finos.legend.engine.protocol.pure.v1.model.data.EmbeddedData;
 
 import java.util.List;
 
@@ -27,5 +28,6 @@ public class DataSpaceExecutionContext
     public PackageableElementPointer mapping;
     public PackageableElementPointer defaultRuntime;
     public List<PackageableElementPointer> stores;
+    public EmbeddedData testData;
     public SourceInformation sourceInformation;
 }

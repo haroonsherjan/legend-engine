@@ -37,6 +37,12 @@ public class TestDataSpaceGrammarRoundtrip extends TestGrammarRoundtrip.TestGram
                 "        test::store::producerStore,\n" +
                 "        test::store::producerStore2\n" +
                 "      ];\n" +
+                "      testData:\n" +
+                "        ExternalFormat\n" +
+                "        #{\n" +
+                "          contentType: 'test';\n" +
+                "          data: 'test';\n" +
+                "        }#;\n" +
                 "    },\n" +
                 "    {\n" +
                 "      name: 'Context 2';\n" +

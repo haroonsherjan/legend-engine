@@ -21,6 +21,7 @@ DATA_SPACE_DEFAULT_EXECUTION_CONTEXT:       'defaultExecutionContext';
 DATA_SPACE_MAPPING:                         'mapping';
 DATA_SPACE_DEFAULT_RUNTIME:                 'defaultRuntime';
 DATA_SPACE_STORES:                          'stores';
+DATA_SPACE_TEST_DATA:                       'testData';
 
 DATA_SPACE_DIAGRAMS:                        'diagrams';
 DATA_SPACE_DIAGRAM:                         'diagram';
