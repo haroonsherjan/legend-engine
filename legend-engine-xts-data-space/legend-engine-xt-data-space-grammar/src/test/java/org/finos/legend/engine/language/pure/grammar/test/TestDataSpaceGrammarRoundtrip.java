@@ -98,6 +98,33 @@ public class TestDataSpaceGrammarRoundtrip extends TestGrammarRoundtrip.TestGram
                 "    ];\n" +
                 "  };\n" +
                 "}\n");
+
+        test("###DataSpace\n" +
+                "DataSpace model::dataSpace\n" +
+                "{\n" +
+                "  executionContexts:\n" +
+                "  [\n" +
+                "    {\n" +
+                "      name: 'Context 1';\n" +
+                "      description: 'some information about the context';\n" +
+                "      mapping: model::String;\n" +
+                "      defaultRuntime: model::Runtime;\n" +
+                "      stores:\n" +
+                "      [\n" +
+                "        test::store::producerStore,\n" +
+                "        test::store::producerStore2\n" +
+                "      ];\n" +
+                "      testData:\n" +
+                "        Reference\n" +
+                "        #{\n" +
+                "          com::test::aDataPointer\n" +
+                "        }#;\n" +
+                "    }\n" +
+                "  ];\n" +
+                "  defaultExecutionContext: 'Context 1';\n" +
+                "  title: 'some title';\n" +
+                "  description: 'some description';\n" +
+                "}\n");
     }
 
     @Test
