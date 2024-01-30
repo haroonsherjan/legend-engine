@@ -23,6 +23,7 @@ import org.finos.legend.engine.language.pure.grammar.from.antlr4.DataSpaceParser
 import org.finos.legend.engine.language.pure.grammar.from.antlr4.mapping.MappingParserGrammar;
 import org.finos.legend.engine.language.pure.grammar.from.extension.PureGrammarParserExtension;
 import org.finos.legend.engine.language.pure.grammar.from.extension.SectionParser;
+import org.finos.legend.engine.language.pure.grammar.from.extension.data.EmbeddedDataParser;
 import org.finos.legend.engine.language.pure.grammar.from.mapping.MappingIncludeParser;
 import org.finos.legend.engine.language.pure.grammar.from.runtime.IncludedStoreFactory;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.PackageableElement;
@@ -91,5 +92,11 @@ public class DataSpaceParserExtension implements PureGrammarParserExtension
     public Iterable<? extends IncludedStoreFactory> getExtraIncludedStoreParsers()
     {
         return org.eclipse.collections.api.factory.Lists.immutable.with(new DataspaceIncludedStoreFactory());
+    }
+
+    @Override
+    public Iterable<? extends EmbeddedDataParser> getExtraEmbeddedDataParsers()
+    {
+        return org.eclipse.collections.api.factory.Lists.immutable.with(new DataspaceDataElementReferenceParser());
     }
 }

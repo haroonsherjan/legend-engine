@@ -115,9 +115,9 @@ public class TestDataSpaceGrammarRoundtrip extends TestGrammarRoundtrip.TestGram
                 "        test::store::producerStore2\n" +
                 "      ];\n" +
                 "      testData:\n" +
-                "        Reference\n" +
+                "        DataspaceTestData\n" +
                 "        #{\n" +
-                "          com::test::aDataPointer\n" +
+                "          com::test::aDifferentDataspace\n" +
                 "        }#;\n" +
                 "    }\n" +
                 "  ];\n" +

@@ -15,12 +15,15 @@
 package org.finos.legend.engine.language.pure.grammar.to;
 
 import org.eclipse.collections.api.block.function.Function;
+import org.eclipse.collections.api.block.function.Function2;
 import org.eclipse.collections.api.block.function.Function3;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.impl.utility.LazyIterate;
 import org.eclipse.collections.impl.utility.ListIterate;
 import org.finos.legend.engine.language.pure.grammar.from.DataSpaceParserExtension;
+import org.finos.legend.engine.language.pure.grammar.from.DataspaceDataElementReferenceParser;
 import org.finos.legend.engine.language.pure.grammar.to.data.HelperEmbeddedDataGrammarComposer;
+import org.finos.legend.engine.language.pure.grammar.to.extension.ContentWithType;
 import org.finos.legend.engine.language.pure.grammar.to.extension.PureGrammarComposerExtension;
 import org.finos.legend.engine.protocol.pure.v1.model.data.EmbeddedData;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.PackageableElement;
@@ -192,6 +195,22 @@ public class DataSpaceGrammarComposerExtension implements PureGrammarComposerExt
         if (includedStoreCarrier.getClass().equals(DataspaceIncludedStoreCarrier.class))
         {
             return "->getStoresFromDataspace()";
+        }
+        return null;
+    }
+
+    @Override
+    public List<Function2<EmbeddedData, PureGrammarComposerContext, ContentWithType>> getExtraEmbeddedDataComposers()
+    {
+        return Collections.singletonList(this::composeDataspaceDataElementReference);
+    }
+
+    private ContentWithType composeDataspaceDataElementReference(EmbeddedData embeddedData, PureGrammarComposerContext context)
+    {
+        if (embeddedData instanceof DataspaceDataElementReference)
+        {
+            String content = context.getIndentationString() + PureGrammarComposerUtility.convertPath(((DataspaceDataElementReference) embeddedData).dataspaceAddress);
+            return new ContentWithType(DataspaceDataElementReferenceParser.TYPE, content);
         }
         return null;
     }

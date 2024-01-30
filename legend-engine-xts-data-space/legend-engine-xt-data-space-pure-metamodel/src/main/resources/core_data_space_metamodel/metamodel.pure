@@ -48,6 +48,7 @@ Class meta::pure::metamodel::dataSpace::DataSpaceExecutionContext
   mapping: meta::pure::mapping::Mapping[1];
   defaultRuntime: meta::pure::runtime::PackageableRuntime[1];
   stores: meta::pure::store::Store[*];
+  testData: meta::pure::data::EmbeddedData[0..1];
 }
 
 Class meta::pure::metamodel::dataSpace::DataSpaceDiagram
