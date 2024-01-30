@@ -214,6 +214,12 @@ public class TestDataSpaceCompilationFromGrammar extends TestCompilationFromGram
                 "      mapping: model::dummyMapping;\n" +
                 "      defaultRuntime: model::dummyRuntime;\n" +
                 "      stores: [ModelStore];\n" +
+                "      testData:\n" +
+                "        ExternalFormat\n" +
+                "        #{\n" +
+                "          contentType: 'test';\n" +
+                "          data: 'test';\n" +
+                "        }#;\n" +
                 "    }\n" +
                 "  ];\n" +
                 "  defaultExecutionContext: 'Context 1';\n" +
