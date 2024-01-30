@@ -205,8 +205,17 @@ public class DataSpaceCompilerExtension implements CompilerExtension
 
     private Root_meta_pure_data_EmbeddedData compileDataspaceDataElementReference(EmbeddedData embeddedData, CompileContext compileContext, ProcessingContext processingContext)
     {
-        DataspaceDataElementReference data = (DataspaceDataElementReference) embeddedData;
-        Root_meta_pure_metamodel_dataSpace_DataSpace dataSpace = DataSpaceCompilerExtension.dataSpacesIndex.get(data.dataspaceAddress);
-        return dataSpace._defaultExecutionContext()._testData();
+        if (embeddedData instanceof DataspaceDataElementReference)
+        {
+            DataspaceDataElementReference data = (DataspaceDataElementReference) embeddedData;
+            if (DataSpaceCompilerExtension.dataSpacesIndex.containsKey(data.dataspaceAddress))
+            {
+                return Optional
+                        .ofNullable(DataSpaceCompilerExtension.dataSpacesIndex.get(data.dataspaceAddress)._defaultExecutionContext()._testData())
+                        .orElseThrow(() -> new EngineException("Dataspace " + data.dataspaceAddress + " does not have test data in its default execution context.", data.sourceInformation, EngineErrorType.COMPILATION));
+            }
+            throw new EngineException("Dataspace " + data.dataspaceAddress + " cannot be found.", data.sourceInformation, EngineErrorType.COMPILATION);
+        }
+        return null;
     }
 }
